@@ -175,12 +175,25 @@ def build_tcx(activity):
     max_hr = activity.get("max_hr")
     dataset = activity.get("hr_dataset_utc", [])
 
+    # Ensure the dataset spans the exact activity duration so Strava computes
+    # elapsed_time = last_trackpoint - first_trackpoint = duration_s.
+    end_utc = (
+        datetime.strptime(start_utc, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        + timedelta(seconds=duration_s)
+    ).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    anchored = list(dataset)
+    if anchored and anchored[0]["time"] != start_utc:
+        anchored.insert(0, {"time": start_utc, "value": anchored[0]["value"]})
+    if anchored and anchored[-1]["time"] != end_utc:
+        anchored.append({"time": end_utc, "value": anchored[-1]["value"]})
+
     trackpoints = "".join(
         f"\n          <Trackpoint>"
         f"<Time>{e['time']}</Time>"
         f"<HeartRateBpm><Value>{e['value']}</Value></HeartRateBpm>"
         f"</Trackpoint>"
-        for e in dataset
+        for e in anchored
     )
     avg_xml = f"\n        <AverageHeartRateBpm><Value>{avg_hr}</Value></AverageHeartRateBpm>" if avg_hr else ""
     max_xml = f"\n        <MaximumHeartRateBpm><Value>{max_hr}</Value></MaximumHeartRateBpm>" if max_hr else ""

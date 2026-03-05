@@ -205,6 +205,7 @@ def sync_confirmed():
                 print(f"[sync {log_id}] Using create_activity (no HR data)")
                 return st.create_activity(tokens["strava"]["access_token"], payload)
 
+            delete_error = None
             if existing_id:
                 try:
                     print(f"[sync {log_id}] Trying to delete existing Strava activity {existing_id}")
@@ -216,11 +217,12 @@ def sync_confirmed():
                     import requests as req_lib
                     print(f"[sync {log_id}] Delete failed: {del_exc}")
                     if isinstance(del_exc, req_lib.HTTPError) and del_exc.response.status_code in (401, 403):
-                        # Can't delete (not created by this app) — update metadata instead
+                        # Strava won't permit deletion (401/403 can both mean this for file-uploaded activities)
                         strava_activity = st.update_activity(
                             tokens["strava"]["access_token"], existing_id, payload
                         )
                         action = "updated"
+                        delete_error = f"HTTP {del_exc.response.status_code}"
                     else:
                         raise
             else:
@@ -235,6 +237,7 @@ def sync_confirmed():
                 "distance_m": payload["distance"],
                 "duration_s": payload["elapsed_time"],
                 "action": action,
+                "delete_error": delete_error,
             })
         except Exception as exc:
             results["errors"].append({**display, "error": str(exc)})

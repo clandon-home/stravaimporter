@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- App icon background — Strava orange, rounded corners -->
+  <rect width="512" height="512" rx="112" fill="#FC4C02"/>
+
+  <!-- ── Swimmer (freestyle, white silhouette) ── -->
+
+  <!-- Head -->
+  <circle cx="142" cy="188" r="31" fill="white"/>
+
+  <!-- Lead arm (stretched forward into water) -->
+  <path d="M 145 210 Q 98 186 55 150"
+        stroke="white" stroke-width="25" stroke-linecap="round" fill="none"/>
+
+  <!-- Body (shoulders → hips, slight downward angle) -->
+  <path d="M 160 216 L 358 262"
+        stroke="white" stroke-width="46" stroke-linecap="round" fill="none"/>
+
+  <!-- Trail arm (exiting water at the back) -->
+  <path d="M 340 258 Q 390 282 432 300"
+        stroke="white" stroke-width="23" stroke-linecap="round" fill="none"/>
+
+  <!-- Legs — flutter kick (two offset strokes) -->
+  <path d="M 358 258 Q 402 240 440 230"
+        stroke="white" stroke-width="25" stroke-linecap="round" fill="none"/>
+  <path d="M 388 252 Q 424 268 454 278"
+        stroke="white" stroke-width="19" stroke-linecap="round" fill="none"/>
+
+  <!-- ── Water waves ── -->
+  <path d="M 52 345 C 110 322 168 368 226 345 C 284 322 342 368 400 345 C 432 332 462 348 475 341"
+        stroke="white" stroke-width="15" stroke-linecap="round" fill="none" opacity="0.85"/>
+  <path d="M 42 390 C 108 367 182 408 256 385 C 330 362 394 403 455 380 C 473 373 490 384 498 378"
+        stroke="white" stroke-width="9"  stroke-linecap="round" fill="none" opacity="0.45"/>
+</svg>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sync Results – Fitbit → Strava</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 6px; }
+    .subtitle { color: #666; margin-bottom: 32px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+      padding: 24px 28px;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 20px;
+    }
+    .card h2 { font-size: 1.05rem; margin-bottom: 14px; }
+    .summary {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      flex: 1;
+      min-width: 100px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .stat .num { font-size: 2.2rem; font-weight: 700; }
+    .stat .label { font-size: .8rem; color: #777; margin-top: 4px; text-transform: uppercase; letter-spacing: .04em; }
+    .num-synced  { color: #28a745; }
+    .num-skipped { color: #6c757d; }
+    .num-errors  { color: #dc3545; }
+
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    th { text-align: left; padding: 6px 8px; color: #666; font-weight: 600; border-bottom: 2px solid #eee; }
+    td { padding: 8px 8px; border-bottom: 1px solid #f0f0f0; }
+    tr:last-child td { border-bottom: none; }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: none;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      background: #4361ee;
+      color: white;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .strava-link { color: #fc4c02; text-decoration: none; font-size: .82rem; }
+    .strava-link:hover { text-decoration: underline; }
+    .empty { color: #aaa; font-size: .9rem; }
+  </style>
+</head>
+<body>
+
+  <h1>🏊 Sync Complete</h1>
+  <p class="subtitle">Results for the last {{ days_back }} days</p>
+
+  <div class="summary" style="width:100%; max-width:600px;">
+    <div class="stat">
+      <div class="num num-synced">{{ results.synced | length }}</div>
+      <div class="label">Synced</div>
+    </div>
+    <div class="stat">
+      <div class="num num-skipped">{{ results.skipped | length }}</div>
+      <div class="label">Skipped</div>
+    </div>
+    <div class="stat">
+      <div class="num num-errors">{{ results.errors | length }}</div>
+      <div class="label">Errors</div>
+    </div>
+  </div>
+
+  {% if results.synced %}
+  <div class="card">
+    <h2>✅ Synced to Strava</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Activity</th>
+          <th>Distance</th>
+          <th>Duration</th>
+          <th>Strava</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in results.synced %}
+        <tr>
+          <td>{{ a.date }}</td>
+          <td>{{ a.name }}{% if a.action and a.action != 'created' %} <span style="font-size:.75rem;color:#888;">({{ a.action }})</span>{% endif %}</td>
+          <td>{{ "%.0f"|format(a.distance_m) }} m</td>
+          <td>{{ (a.duration_s // 60) }}m {{ (a.duration_s % 60) }}s</td>
+          <td>
+            {% if a.strava_id %}
+            <a class="strava-link" href="https://www.strava.com/activities/{{ a.strava_id }}" target="_blank">View ↗</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% for a in results.synced %}{% if a.action == 'updated' %}
+    <p style="margin-top:14px; font-size:.82rem; color:#888; line-height:1.5;">
+      <strong>Note ({{ a.date }} {{ a.name }}):</strong> Strava did not allow deletion of the existing activity
+      {% if a.delete_error %}({{ a.delete_error }}){% endif %} — only the name and description were updated.
+      Heart rate history was not changed. To get full HR data, delete the activity on Strava manually and re-sync here.
+    </p>
+    {% endif %}{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if results.skipped %}
+  <div class="card">
+    <h2>⏭ Already synced (skipped)</h2>
+    <table>
+      <thead><tr><th>Date</th><th>Activity</th><th>Reason</th></tr></thead>
+      <tbody>
+        {% for a in results.skipped %}
+        <tr>
+          <td>{{ a.date }}</td>
+          <td>{{ a.name }}</td>
+          <td>{{ a.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if results.errors %}
+  <div class="card">
+    <h2>❌ Errors</h2>
+    <table>
+      <thead><tr><th>Date</th><th>Activity</th><th>Error</th></tr></thead>
+      <tbody>
+        {% for a in results.errors %}
+        <tr>
+          <td>{{ a.date }}</td>
+          <td>{{ a.name }}</td>
+          <td style="color:#dc3545;">{{ a.error }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if not results.synced and not results.skipped and not results.errors %}
+  <div class="card">
+    <p class="empty">No swimming activities found in the last {{ days_back }} days.</p>
+  </div>
+  {% endif %}
+
+  <a href="/" class="btn">← Back to home</a>
+
+</body>
+</html>
